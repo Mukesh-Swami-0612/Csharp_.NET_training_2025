@@ -1,0 +1,32 @@
+
+developing a C# application.
+public static List<int> NumberList - In the code template, it is already provided.
+In class Program, implement the below-given methods.
+
+Method	Description
+public void AddNumbers(int Numbers)	This method is used to add the Numbers to the NumberList, Numbers is passed as an argument.
+public double GetGPAScored()	This method is used to find the GPA of all Numbers scored in the semester and return the value.
+GPA can be calculated based on the sum of products of each Number available in the NumberList and credit point for each subject, divided by the sum of credits.
+Note : The credit point of each subject is commonly 3.
+GPA can be calculated based on the following formula :
+GPA= (Number1 * 3) + (Number2 * 3) + ... + (Numbern * 3)/(List count * 3)
+If the List is empty then return -1 and print "No Numbers Available" in the Main method.
+public char GetGradeScored(double gpa)	This method is used to find the grade for gpa passed as an argument and return the grade.
+The grade point equivalent for each grade is mentioned in the below table.
+If the gpa is less than 5 or greater than 10, then return a null character and print "Invalid GPA" in the Main method.
+GPA Table
+GPA	Grade
+GPA Table
+Equal to 10	S
+>= 9 and <10	A
+>= 8 and <9	B
+>= 7 and <8	C
+>= 6 and <7	D
+>= 5 and <6	E
+In Program class, the Main method,
+
+Get the values from the user.
+
+Call the methods accordingly and display the result.
+
+In the Sample Input / Output provided, the highlighted text in bold corresponds to the input given by the user and the remaining text represents the output.
