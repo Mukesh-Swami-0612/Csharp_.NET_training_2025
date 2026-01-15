@@ -1,0 +1,24 @@
+1. Find Items
+Functionalities:
+
+In class Program,
+public static SortedDictionary<String, long> itemDetails - In the code template, this sorted dictionary is already provided.
+Implement the below-given methods.
+
+Method	Description
+public SortedDictionary<String,long> FindItemDetails(long soldCount)	This method is used to find the item details by sold count.
+If the sold count is available in the itemDetails, it should return that item as SortedDictionary.
+If the sold count is not available in itemDetails then return an empty SortedDictionary.
+If this method return empty SortedDictionary, then print "Invalid sold count" in Main method.
+public List<String> FindMinandMaxSoldItems()	This method is used to find the minimum and maximum sold items from itemDetails.
+Then store the minimum and maximum sold items name in string List and return it.
+Note : In list first add the minimum sold item name and second one is maximum sold.
+public Dictionary<string, long> SortByCount()	This method is used to display all the item details available in the itemDetails in ascending order by sold count.
+Return the result as a Dictionary.
+In Program class, Main method,
+
+Get the values from the user.
+
+Call the methods accordingly and display the result.
+
+In the Sample Input / Output provided, the highlighted text in bold corresponds to the input given by the user and the remaining text represents the output.
