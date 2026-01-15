@@ -1,0 +1,22 @@
+Functionalities:
+
+In the class User, implement the below given public properties.
+
+Class	Property Name
+User	String Name
+User	String PhoneNumber
+
+In the class Program, implement the below-given method.
+
+Method	Description
+public User ValidatePhoneNumber(String name, String phoneNumber)	This method should check whether the length of the phoneNumber is equal to 10, if phoneNumber length is equal to 10 then copy the name and phoneNumber to the User object and return it.
+If the phoneNumber length is not equal to 10, then throw a user-defined exception called InvalidPhoneNumberException with the message "Invalid phone number".
+Note:
+
+The Exception object itself should display this message. To do this, A class InvalidPhoneNumberException inherits the Exception class.
+
+If the phone number does not meet the requirement, this method should throw a user-defined exception "InvalidPhoneNumberException".
+
+From the main method invoke the ValidatePhoneNumber method to handle the exception and print the appropriate message.
+
+Output is Case-sensitive.
