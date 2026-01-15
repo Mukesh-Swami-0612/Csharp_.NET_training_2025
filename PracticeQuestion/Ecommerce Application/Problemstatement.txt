@@ -1,0 +1,27 @@
+Functionalities:
+
+In the class EcommerceShop, incorporate the following public properties:
+
+Class Name	Property Name
+EcommerceShop	string UserName
+EcommerceShop	double WalletBalance
+EcommerceShop	double TotalPurchaseAmount
+
+In the class Program, implement the below specified method:
+
+Method Name	Description
+public EcommerceShop MakePayment(string name, double balance, double amount)	This method should get the purchase details, create the EcommerceShop object using those details, and return that object.
+If Emily's wallet balance is less than the total payment amount, then throw a user-defined exception called InsufficientWalletBalanceException with the message "Insufficient balance in your digital wallet".
+Note:
+
+The Exception object itself should display this message.
+
+To do this, a class InsufficientWalletBalanceException that inherits from the Exception class.
+
+In the Program class, write the Main method and test the MakePayment method.
+
+If it returns a valid EcommerceShop object, then display "Payment successful".
+
+Use a catch block to handle the exception that is returned by the MakePayment method. In the catch block, display the exception message.
+
+Output is Case-sensitive.
