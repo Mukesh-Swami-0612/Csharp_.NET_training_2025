@@ -1,0 +1,11 @@
+C:\Users\Mukesh\Desktop\capg\NUnit\CollegeServiceNUnitDemo\CollegeService\bin\Debug\net10.0\CollegeService.deps.json
+C:\Users\Mukesh\Desktop\capg\NUnit\CollegeServiceNUnitDemo\CollegeService\bin\Debug\net10.0\CollegeService.dll
+C:\Users\Mukesh\Desktop\capg\NUnit\CollegeServiceNUnitDemo\CollegeService\bin\Debug\net10.0\CollegeService.pdb
+C:\Users\Mukesh\Desktop\capg\NUnit\CollegeServiceNUnitDemo\CollegeService\obj\Debug\net10.0\CollegeService.GeneratedMSBuildEditorConfig.editorconfig
+C:\Users\Mukesh\Desktop\capg\NUnit\CollegeServiceNUnitDemo\CollegeService\obj\Debug\net10.0\CollegeService.AssemblyInfoInputs.cache
+C:\Users\Mukesh\Desktop\capg\NUnit\CollegeServiceNUnitDemo\CollegeService\obj\Debug\net10.0\CollegeService.AssemblyInfo.cs
+C:\Users\Mukesh\Desktop\capg\NUnit\CollegeServiceNUnitDemo\CollegeService\obj\Debug\net10.0\CollegeService.csproj.CoreCompileInputs.cache
+C:\Users\Mukesh\Desktop\capg\NUnit\CollegeServiceNUnitDemo\CollegeService\obj\Debug\net10.0\CollegeService.dll
+C:\Users\Mukesh\Desktop\capg\NUnit\CollegeServiceNUnitDemo\CollegeService\obj\Debug\net10.0\refint\CollegeService.dll
+C:\Users\Mukesh\Desktop\capg\NUnit\CollegeServiceNUnitDemo\CollegeService\obj\Debug\net10.0\CollegeService.pdb
+C:\Users\Mukesh\Desktop\capg\NUnit\CollegeServiceNUnitDemo\CollegeService\obj\Debug\net10.0\ref\CollegeService.dll
