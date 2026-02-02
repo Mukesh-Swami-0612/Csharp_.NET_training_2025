@@ -1,17 +1,16 @@
-
 using System;
 
 class Program
 {
     public static string CleanseAndInvert(string input)
     {
-        // Rule 1: Check for null or length < 6
+        // Check null or minimum length
         if (string.IsNullOrEmpty(input) || input.Length < 6)
         {
             return "";
         }
 
-        // Rule 2: Check for space, digit, or special character
+        // Check only alphabets allowed
         foreach (char ch in input)
         {
             if (!char.IsLetter(ch))
@@ -25,12 +24,12 @@ class Program
 
         string filtered = "";
 
-        // Remove characters with even ASCII values
+        // Remove even ASCII characters
         foreach (char ch in input)
         {
             int ascii = (int)ch;
 
-            if (ascii % 2 != 0) // keep only odd ASCII
+            if (ascii % 2 != 0) // keep odd ASCII
             {
                 filtered += ch;
             }
@@ -41,7 +40,7 @@ class Program
         Array.Reverse(arr);
         string reversed = new string(arr);
 
-        // Convert even index characters to uppercase
+        // Make even index letters uppercase
         char[] result = reversed.ToCharArray();
 
         for (int i = 0; i < result.Length; i++)
@@ -59,10 +58,13 @@ class Program
     {
         Console.WriteLine("Enter the word");
 
+        // Read input
         string input = Console.ReadLine();
 
+        // Process input
         string output = CleanseAndInvert(input);
 
+        // Print result
         if (output == "")
         {
             Console.WriteLine("Invalid Input");
