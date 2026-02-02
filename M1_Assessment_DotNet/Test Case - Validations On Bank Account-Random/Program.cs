@@ -3,11 +3,11 @@ using System;
 
 namespace BankAccountTests
 {
-    [TestFixture] // Required attribute for test class
+    [TestFixture]   // Required attribute for test class
     public class UnitTest
     {
         // Test for valid deposit
-        [Test]
+        [Test]   // Required attribute for test method
         public void Test_Deposit_ValidAmount()
         {
             // Arrange
