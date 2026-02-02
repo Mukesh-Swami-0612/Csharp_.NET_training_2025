@@ -3,58 +3,59 @@ using System;
 
 namespace BankAccountTests
 {
-    [TestFixture]   // Required attribute for test class
+    // Mark class as test class
+    [TestFixture]
     public class UnitTest
     {
-        // Test for valid deposit
-        [Test]   // Required attribute for test method
+        // Test valid deposit
+        [Test]
         public void Test_Deposit_ValidAmount()
         {
-            // Arrange
+            // Create account
             Program account = new Program(1000m);
 
-            // Act
+            // Deposit money
             account.Deposit(500m);
 
-            // Assert
+            // Check balance
             Assert.AreEqual(1500m, account.Balance);
         }
 
-        // Test for negative deposit
+        // Test negative deposit
         [Test]
         public void Test_Deposit_NegativeAmount()
         {
-            // Arrange
+            // Create account
             Program account = new Program(1000m);
 
-            // Act & Assert
+            // Check exception
             var ex = Assert.Throws<Exception>(() => account.Deposit(-200m));
 
             Assert.AreEqual("Deposit amount cannot be negative", ex.Message);
         }
 
-        // Test for valid withdrawal
+        // Test valid withdrawal
         [Test]
         public void Test_Withdraw_ValidAmount()
         {
-            // Arrange
+            // Create account
             Program account = new Program(1000m);
 
-            // Act
+            // Withdraw money
             account.Withdraw(400m);
 
-            // Assert
+            // Check balance
             Assert.AreEqual(600m, account.Balance);
         }
 
-        // Test for insufficient funds
+        // Test insufficient balance
         [Test]
         public void Test_Withdraw_InsufficientFunds()
         {
-            // Arrange
+            // Create account
             Program account = new Program(500m);
 
-            // Act & Assert
+            // Check exception
             var ex = Assert.Throws<Exception>(() => account.Withdraw(800m));
 
             Assert.AreEqual("Insufficient funds.", ex.Message);
