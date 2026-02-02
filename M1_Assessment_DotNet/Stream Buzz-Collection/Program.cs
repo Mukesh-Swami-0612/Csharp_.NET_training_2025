@@ -1,6 +1,7 @@
 using System;
 using System.Collections.Generic;
 
+// Store creator details
 public class CreatorStats
 {
     public string CreatorName { get; set; }
@@ -9,15 +10,16 @@ public class CreatorStats
 
 public class Program
 {
+    // List to store all creators
     public static List<CreatorStats> EngagementBoard = new List<CreatorStats>();
 
-    // Register creator
+    // Add creator to list
     public void RegisterCreator(CreatorStats record)
     {
         EngagementBoard.Add(record);
     }
 
-    // Get top post counts
+    // Get count of posts above threshold
     public Dictionary<string, int> GetTopPostCounts(List<CreatorStats> records, double likeThreshold)
     {
         Dictionary<string, int> result = new Dictionary<string, int>();
@@ -43,7 +45,7 @@ public class Program
         return result;
     }
 
-    // Calculate average likes
+    // Calculate overall average likes
     public double CalculateAverageLikes()
     {
         double total = 0;
@@ -69,6 +71,7 @@ public class Program
         Program program = new Program();
         bool running = true;
 
+        // Main menu loop
         while (running)
         {
             Console.WriteLine("\n1. Register Creator");
@@ -82,7 +85,7 @@ public class Program
             switch (choice)
             {
                 case 1:
-                    // Register creator
+                    // Register new creator
                     CreatorStats creator = new CreatorStats();
 
                     Console.WriteLine("Enter Creator Name:");
@@ -124,19 +127,20 @@ public class Program
                     break;
 
                 case 3:
-                    // Calculate average
+                    // Show average likes
                     double avg = program.CalculateAverageLikes();
 
                     Console.WriteLine("Overall average weekly likes: " + avg);
                     break;
 
                 case 4:
-                    // Exit
+                    // Exit program
                     Console.WriteLine("Logging off - Keep Creating with StreamBuzz!");
                     running = false;
                     break;
 
                 default:
+                    // Wrong input
                     Console.WriteLine("Invalid choice");
                     break;
             }
