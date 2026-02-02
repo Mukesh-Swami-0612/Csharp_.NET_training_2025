@@ -1,26 +1,31 @@
 using System;
 
-class RobotSafetyException : Exception
+// Custom Exception Class
+public class RobotSafetyException : Exception
 {
     public RobotSafetyException(string message) : base(message)
     {
     }
 }
 
-class RobotHazardAuditor
+// Auditor Class
+public class RobotHazardAuditor
 {
     public double CalculateHazardRisk(double armPrecision, int workerDensity, string machineryState)
     {
+        // Validate arm precision
         if (armPrecision < 0.0 || armPrecision > 1.0)
         {
-            throw new RobotSafetyException("Error:  Arm precision must be 0.0-1.0");
+            throw new RobotSafetyException("Error: Arm precision must be 0.0-1.0");
         }
 
+        // Validate worker density
         if (workerDensity < 1 || workerDensity > 20)
         {
             throw new RobotSafetyException("Error: Worker density must be 1-20");
         }
 
+        // Validate machinery state (case-sensitive)
         double machineRiskFactor = 0.0;
 
         if (machineryState == "Worn")
@@ -40,15 +45,19 @@ class RobotHazardAuditor
             throw new RobotSafetyException("Error: Unsupported machinery state");
         }
 
-        double risk = ((1.0 - armPrecision) * 15.0) + (workerDensity * machineRiskFactor);
+        // Calculate Hazard Risk
+        double hazardRisk =
+            ((1.0 - armPrecision) * 15.0) +
+            (workerDensity * machineRiskFactor);
 
-        return risk;
+        return hazardRisk;
     }
 }
 
-class Program
+// Main Program
+public class Program
 {
-    static void Main(string[] args)
+    public static void Main(string[] args)
     {
         try
         {
@@ -63,17 +72,21 @@ class Program
             Console.WriteLine("Enter Machinery State (Worn/Faulty/Critical):");
             string machineryState = Console.ReadLine();
 
-            double result = auditor.CalculateHazardRisk(armPrecision, workerDensity, machineryState);
+            double risk = auditor.CalculateHazardRisk(
+                armPrecision,
+                workerDensity,
+                machineryState
+            );
 
-            Console.WriteLine("Robot Hazard Risk Score: " + result);
+            Console.WriteLine("Robot Hazard Risk Score: " + risk);
         }
         catch (RobotSafetyException ex)
         {
             Console.WriteLine(ex.Message);
         }
-        catch (Exception e)
+        catch (Exception ex)
         {
-            Console.WriteLine("Invalid input");
+            Console.WriteLine("Unexpected Error: " + ex.Message);
         }
     }
 }
