@@ -1,3 +1,4 @@
+//Create a `Person` class with a method `GetDetails()`. Derive a `Student` class that overrides it.
 using System;
 class Person {
     public virtual void GetDetails() {
