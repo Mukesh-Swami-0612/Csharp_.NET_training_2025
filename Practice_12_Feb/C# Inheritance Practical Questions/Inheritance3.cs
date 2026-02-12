@@ -1,3 +1,4 @@
+//Implement an `Employee` base class with a method `CalculateSalary()`. Create a `Manager` class that adds a bonus to salary.
 using System;
 class Employee {
     public virtual int  CalculateSalary() {
