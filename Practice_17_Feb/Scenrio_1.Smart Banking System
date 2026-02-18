@@ -1,0 +1,197 @@
+using System;
+using System.Collections.Generic;
+using System.Linq;
+
+public class InsufficientBalanceException : Exception
+{
+    public InsufficientBalanceException(string msg) : base(msg) { }
+}
+
+public class MinimumBalanceException : Exception
+{
+    public MinimumBalanceException(string msg) : base(msg) { }
+}
+
+public class InvalidTransactionException : Exception
+{
+    public InvalidTransactionException(string msg) : base(msg) { }
+}
+
+public abstract class BankAccount
+{
+    public string AccountNumber { get; set; }
+    public string CustomerName { get; set; }
+    public double Balance { get; protected set; }
+    public List<string> TransactionHistory { get; set; } = new List<string>();
+
+    public BankAccount(string accNo, string name, double balance)
+    {
+        AccountNumber = accNo;
+        CustomerName = name;
+        Balance = balance;
+    }
+
+    public virtual void Deposit(double amount)
+    {
+        if (amount <= 0) throw new InvalidTransactionException("Invalid deposit amount");
+        Balance += amount;
+        TransactionHistory.Add("Deposited: " + amount);
+    }
+
+    public virtual void Withdraw(double amount)
+    {
+        if (amount <= 0) throw new InvalidTransactionException("Invalid withdrawal amount");
+        if (amount > Balance) throw new InsufficientBalanceException("Insufficient balance");
+        Balance -= amount;
+        TransactionHistory.Add("Withdrawn: " + amount);
+    }
+
+    public void Transfer(BankAccount toAccount, double amount)
+    {
+        this.Withdraw(amount);
+        toAccount.Deposit(amount);
+        TransactionHistory.Add("Transferred " + amount + " to " + toAccount.AccountNumber);
+    }
+
+    public abstract double CalculateInterest();
+}
+
+public class SavingsAccount : BankAccount
+{
+    private double MinimumBalance = 1000;
+
+    public SavingsAccount(string accNo, string name, double balance)
+        : base(accNo, name, balance) { }
+
+    public override void Withdraw(double amount)
+    {
+        if (Balance - amount < MinimumBalance)
+            throw new MinimumBalanceException("Minimum balance required");
+        base.Withdraw(amount);
+    }
+
+    public override double CalculateInterest()
+    {
+        return Balance * 0.04;
+    }
+}
+
+public class CurrentAccount : BankAccount
+{
+    private double OverdraftLimit = 20000;
+
+    public CurrentAccount(string accNo, string name, double balance)
+        : base(accNo, name, balance) { }
+
+    public override void Withdraw(double amount)
+    {
+        if (amount > Balance + OverdraftLimit)
+            throw new InsufficientBalanceException("Overdraft limit exceeded");
+        Balance -= amount;
+        TransactionHistory.Add("Withdrawn: " + amount);
+    }
+
+    public override double CalculateInterest()
+    {
+        return 0;
+    }
+}
+
+public class LoanAccount : BankAccount
+{
+    public LoanAccount(string accNo, string name, double balance)
+        : base(accNo, name, balance) { }
+
+    public override void Deposit(double amount)
+    {
+        throw new InvalidTransactionException("Cannot deposit in loan account");
+    }
+
+    public override double CalculateInterest()
+    {
+        return Balance * 0.1;
+    }
+}
+
+public class Program
+{
+    static List<BankAccount> accounts = new List<BankAccount>();
+
+    public static void Main()
+    {
+        accounts.Add(new SavingsAccount("S1", "Rahul", 60000));
+        accounts.Add(new CurrentAccount("C1", "Riya", 40000));
+        accounts.Add(new LoanAccount("L1", "Amit", 80000));
+        accounts.Add(new SavingsAccount("S2", "Rohit", 120000));
+
+        while (true)
+        {
+            Console.WriteLine("1.Deposit 2.Withdraw 3.Transfer 4.Show LINQ 5.Exit");
+            int choice = int.Parse(Console.ReadLine());
+
+            try
+            {
+                if (choice == 1)
+                {
+                    Console.Write("Account No: ");
+                    string acc = Console.ReadLine();
+                    Console.Write("Amount: ");
+                    double amt = double.Parse(Console.ReadLine());
+                    accounts.First(a => a.AccountNumber == acc).Deposit(amt);
+                }
+                else if (choice == 2)
+                {
+                    Console.Write("Account No: ");
+                    string acc = Console.ReadLine();
+                    Console.Write("Amount: ");
+                    double amt = double.Parse(Console.ReadLine());
+                    accounts.First(a => a.AccountNumber == acc).Withdraw(amt);
+                }
+                else if (choice == 3)
+                {
+                    Console.Write("From: ");
+                    string from = Console.ReadLine();
+                    Console.Write("To: ");
+                    string to = Console.ReadLine();
+                    Console.Write("Amount: ");
+                    double amt = double.Parse(Console.ReadLine());
+                    var acc1 = accounts.First(a => a.AccountNumber == from);
+                    var acc2 = accounts.First(a => a.AccountNumber == to);
+                    acc1.Transfer(acc2, amt);
+                }
+                else if (choice == 4)
+                {
+                    var highBalance = accounts.Where(a => a.Balance > 50000);
+                    var totalBalance = accounts.Sum(a => a.Balance);
+                    var top3 = accounts.OrderByDescending(a => a.Balance).Take(3);
+                    var grouped = accounts.GroupBy(a => a.GetType().Name);
+                    var startsWithR = accounts.Where(a => a.CustomerName.StartsWith("R"));
+
+                    Console.WriteLine("Balance > 50000:");
+                    foreach (var a in highBalance)
+                        Console.WriteLine(a.CustomerName + " " + a.Balance);
+
+                    Console.WriteLine("Total Bank Balance: " + totalBalance);
+
+                    Console.WriteLine("Top 3 Accounts:");
+                    foreach (var a in top3)
+                        Console.WriteLine(a.CustomerName + " " + a.Balance);
+
+                    Console.WriteLine("Grouped By Type:");
+                    foreach (var g in grouped)
+                        Console.WriteLine(g.Key + " Count: " + g.Count());
+
+                    Console.WriteLine("Names starting with R:");
+                    foreach (var a in startsWithR)
+                        Console.WriteLine(a.CustomerName);
+                }
+                else if (choice == 5)
+                    break;
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine("Error: " + ex.Message);
+            }
+        }
+    }
+}
