@@ -1,0 +1,12 @@
+﻿@model StudentCRUD.Models.Student
+
+<h2>Add Student</h2>
+
+@using (Html.BeginForm())
+{
+    <p>Name: @Html.TextBoxFor(x => x.Name)</p>
+    <p>Age: @Html.TextBoxFor(x => x.Age)</p>
+    <p>Course: @Html.TextBoxFor(x => x.Course)</p>
+
+    <input type="submit" value="Save" />
+}

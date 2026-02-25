@@ -1,0 +1,16 @@
+﻿@{
+    ViewData["Title"] = "Countries";
+    var countries = ViewBag.myVariable.ToString().Split(',');
+}
+
+
+var count =1;
+<div>
+    <h2>Country List</h2>
+        @for (int i = 0; i < countries.Length; i++)
+        {
+            @countries[i]
+        <hr />
+            <br />
+        }
+</div>

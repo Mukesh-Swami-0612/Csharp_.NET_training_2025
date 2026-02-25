@@ -1,0 +1,37 @@
+﻿@model Dictionary<int, EmployeeDictionaryDemo.Models.Employee>
+
+<link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet" />
+
+<div class="container mt-5">
+    <h2>Employee List</h2>
+
+    <p><strong>Total Employees:</strong> @ViewBag.Count</p>
+
+    @if (TempData["Error"] != null)
+    {
+        <div class="alert alert-danger">
+            @TempData["Error"]
+        </div>
+    }
+
+    <a asp-action="Create" class="btn btn-success mb-3">
+        Add New Employee
+    </a>
+
+    <table class="table table-bordered">
+        <tr>
+            <th>ID</th>
+            <th>Name</th>
+            <th>Email</th>
+        </tr>
+
+        @foreach (var item in Model)
+        {
+            <tr>
+                <td>@item.Value.Id</td>
+                <td>@item.Value.Name</td>
+                <td>@item.Value.Email</td>
+            </tr>
+        }
+    </table>
+</div>
