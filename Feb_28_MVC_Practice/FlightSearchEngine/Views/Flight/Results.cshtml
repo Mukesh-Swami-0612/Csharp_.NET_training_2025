@@ -1,0 +1,44 @@
+﻿@using FlightSearchEngine.Models
+@model IEnumerable<object>
+@using System.Linq
+
+@{
+    ViewData["Title"] = "Results";
+}
+
+<h2>Search Results</h2>
+
+@if (Model == null || !Model.Any())
+{
+    <p style="color:red;">No Results Found</p>
+}
+else
+{
+    <table class="table table-bordered">
+        <thead>
+            <tr>
+                @foreach (var prop in Model.First().GetType().GetProperties())
+                {
+                    <th>@prop.Name</th>
+                }
+            </tr>
+        </thead>
+        <tbody>
+            @foreach (var item in Model)
+            {
+                <tr>
+                    @foreach (var prop in item.GetType().GetProperties())
+                    {
+                        <td>@prop.GetValue(item)</td>
+                    }
+                </tr>
+            }
+        </tbody>
+    </table>
+}
+
+<br />
+
+<a asp-action="Index" class="btn btn-primary">
+    Back to Search
+</a>

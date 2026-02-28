@@ -1,0 +1,52 @@
+﻿@model FlightSearchEngine.Models.SearchViewModel
+
+@{
+    ViewData["Title"] = "Flight Search";
+}
+
+<h2>Flight Search Engine</h2>
+
+<form asp-action="SearchFlights" method="post">
+    @Html.AntiForgeryToken()
+
+    <div>
+        <label>Source</label>
+        <select asp-for="Source" asp-items="Model.SourceList" class="form-control">
+            <option value="">-- Select Source --</option>
+        </select>
+    </div>
+
+    <br />
+
+    <div>
+        <label>Destination</label>
+        <select asp-for="Destination" asp-items="Model.DestinationList" class="form-control">
+            <option value="">-- Select Destination --</option>
+        </select>
+    </div>
+
+    <br />
+
+    <div>
+        <label>Number of Persons</label>
+        <input asp-for="NumberOfPersons" type="number" class="form-control" />
+    </div>
+
+    <br />
+
+    <div>
+        <button type="submit" class="btn btn-success">
+            Search Flights Only
+        </button>
+
+        <button asp-action="SearchFlightsWithHotels"
+                type="submit"
+                class="btn btn-warning">
+            Search Flight + Hotel
+        </button>
+    </div>
+
+    <br />
+
+    <div asp-validation-summary="All" class="text-danger"></div>
+</form>
