@@ -1,0 +1,39 @@
+﻿@model StudentPortal.Models.DashboardViewModel
+
+@{
+    ViewData["Title"] = "Dashboard";
+}
+
+<h2 class="text-center mb-4">Admin Dashboard</h2>
+
+<div class="row text-center">
+
+    <div class="col-md-3">
+        <div class="card bg-primary text-white p-3 shadow">
+            <h4>Total Students</h4>
+            <h2>@Model.TotalStudents</h2>
+        </div>
+    </div>
+
+    <div class="col-md-3">
+        <div class="card bg-success text-white p-3 shadow">
+            <h4>Total Courses</h4>
+            <h2>@Model.TotalCourses</h2>
+        </div>
+    </div>
+
+    <div class="col-md-3">
+        <div class="card bg-warning text-dark p-3 shadow">
+            <h4>Total Paid Amount</h4>
+            <h2>₹ @Model.TotalPaidAmount</h2>
+        </div>
+    </div>
+
+    <div class="col-md-3">
+        <div class="card bg-danger text-white p-3 shadow">
+            <h4>Pending Payments</h4>
+            <h2>@Model.PendingPayments</h2>
+        </div>
+    </div>
+
+</div>

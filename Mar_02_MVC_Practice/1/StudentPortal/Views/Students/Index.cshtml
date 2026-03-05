@@ -1,0 +1,115 @@
+﻿@model List<StudentPortal.Models.Student>
+@{
+    ViewData["Title"] = "Students";
+}
+
+<link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
+
+<div class="container mt-5">
+
+    <div class="card shadow-lg p-4 rounded-4">
+
+        <div class="d-flex justify-content-between mb-4">
+            <h2 class="fw-bold">🎓 Students Management</h2>
+            <a asp-controller="Students"
+               asp-action="Create"
+               class="btn btn-success">
+                + Add Student
+            </a>
+        </div>
+
+        <div class="row mb-3">
+            <div class="col-md-6">
+                <input type="text" id="q" class="form-control rounded-pill"
+                       placeholder="Search by name or email..." />
+            </div>
+            <div class="col-md-2">
+                <button id="btnSearch" class="btn btn-dark w-100 rounded-pill">
+                    Search
+                </button>
+            </div>
+        </div>
+
+        <div id="liveBox" class="mb-2 text-muted"></div>
+
+        <table class="table table-hover align-middle">
+            <thead class="table-dark">
+                <tr>
+                    <th>ID</th>
+                    <th>Name</th>
+                    <th>Email</th>
+                    <th>Status</th>
+                    <th width="200">Actions</th>
+                </tr>
+            </thead>
+            <tbody id="tblBody">
+                @foreach (var s in Model)
+                {
+                    <tr>
+                        <td>@s.StudentId</td>
+                        <td>@s.FullName</td>
+                        <td>@s.Email</td>
+                        <td>
+                            <span class="badge bg-success">@s.Status</span>
+                        </td>
+                        <td>
+                            <a asp-controller="Students"
+                               asp-action="Edit"
+                               asp-route-id="@s.StudentId">
+                                Edit
+                            </a>
+
+                            <a asp-action="Delete"
+                               asp-route-id="@s.StudentId"
+                               class="btn btn-danger btn-sm rounded-pill">
+                                Delete
+                            </a>
+                        </td>
+                    </tr>
+                }
+            </tbody>
+        </table>
+
+    </div>
+</div>
+
+@section Scripts {
+    <script>
+        const qEl = document.getElementById("q");
+        const box = document.getElementById("liveBox");
+        const tbody = document.getElementById("tblBody");
+        const btn = document.getElementById("btnSearch");
+
+        async function liveSearch(){
+            const q = qEl.value.trim();
+            if(q.length === 0){
+                location.reload();
+                return;
+            }
+
+            box.innerHTML = "🔎 Searching...";
+
+            const res = await fetch(`/Students/Search?q=${encodeURIComponent(q)}`);
+            const data = await res.json();
+
+            box.innerHTML = `Found ${data.length} result(s)`;
+
+            tbody.innerHTML = data.map(s => `
+                <tr>
+                    <td>${s.studentId}</td>
+                    <td>${s.fullName}</td>
+                    <td>${s.email}</td>
+                    <td><span class="badge bg-success">${s.status}</span></td>
+                    <td>
+                        <a href="/Students/Edit/${s.studentId}"
+                           class="btn btn-warning btn-sm rounded-pill">Edit</a>
+                        <a href="/Students/Delete/${s.studentId}"
+                           class="btn btn-danger btn-sm rounded-pill">Delete</a>
+                    </td>
+                </tr>
+            `).join("");
+        }
+
+        btn.addEventListener("click", liveSearch);
+    </script>
+}
