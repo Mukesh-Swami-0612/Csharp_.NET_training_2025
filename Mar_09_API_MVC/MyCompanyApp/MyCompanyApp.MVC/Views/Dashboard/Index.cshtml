@@ -1,0 +1,56 @@
+﻿@model MyCompanyApp.MVC.Models.DashboardViewModel
+
+<h2>Admin Dashboard</h2>
+
+<div style="display:flex; gap:20px">
+
+    <div style="padding:20px; background:#4CAF50; color:white">
+        <h3>Total Employees</h3>
+        <h2>@Model.TotalEmployees</h2>
+    </div>
+
+    <div style="padding:20px; background:#2196F3; color:white">
+        <h3>Total Customers</h3>
+        <h2>@Model.TotalCustomers</h2>
+    </div>
+
+    <div style="padding:20px; background:#FF9800; color:white">
+        <h3>Total Orders</h3>
+        <h2>@Model.TotalOrders</h2>
+    </div>
+
+</div>
+
+<br>
+
+<canvas id="myChart"></canvas>
+
+@section Scripts {
+
+    <script>
+
+        const ctx = document.getElementById('myChart');
+
+        new Chart(ctx, {
+            type: 'bar',
+            data: {
+                labels: ['Employees', 'Customers', 'Orders'],
+                datasets: [{
+                    label: 'System Data',
+                    data: [
+                        @Model.TotalEmployees,
+                        @Model.TotalCustomers,
+                        @Model.TotalOrders
+                    ],
+                    backgroundColor: [
+                        'green',
+                        'blue',
+                        'orange'
+                    ]
+                }]
+            }
+        });
+
+    </script>
+
+}

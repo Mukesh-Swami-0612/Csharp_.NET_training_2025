@@ -1,0 +1,946 @@
+================================================================================
+         MyCompanyApp - COMPLETE PROJECT DOCUMENTATION
+================================================================================
+Generated on: 2025
+Solution File: MyCompanyApp.slnx
+Target Framework: .NET 8.0
+C# Version: 12.0
+Architecture: Browser → MVC (Frontend) → API (Backend) → Data Layer → SQL Server
+
+================================================================================
+                        TABLE OF CONTENTS
+================================================================================
+1.  Solution Overview & Architecture
+2.  Project Structure (Folder Tree)
+3.  Project References & Dependencies
+4.  MyCompanyApp.Data Project (Class Library)
+5.  MyCompanyApp.API Project (ASP.NET Core Web API)
+6.  MyCompanyApp.MVC Project (ASP.NET Core MVC)
+7.  Configuration Files
+8.  Launch Settings & URLs
+9.  Data Flow (End-to-End Request)
+10. Fixes Applied During Setup
+11. How to Run the Solution
+
+================================================================================
+1. SOLUTION OVERVIEW & ARCHITECTURE
+================================================================================
+
+The solution follows a 3-tier architecture with strict separation of concerns:
+
+    ┌─────────────┐     HTTP (JSON)     ┌─────────────┐   EF Core    ┌────────────┐
+    │  Browser     │ ──────────────────► │  MVC App    │              │            │
+    │  (User)      │ ◄────────────────── │  Port 7079  │              │            │
+    └─────────────┘     HTML Response    └──────┬──────┘              │            │
+                                                │                     │            │
+                                          HttpClient                  │            │
+                                          (ApiService)                │            │
+                                                │                     │            │
+                                        ┌───────▼──────┐  DbContext  │  SQL       │
+                                        │  Web API     │ ──────────► │  Server    │
+                                        │  Port 7014   │ ◄────────── │  (Adventure│
+                                        └──────────────┘   Query     │   Works    │
+                                                                      │   2025)   │
+                                                                      └────────────┘
+
+- MyCompanyApp.MVC    : Frontend - serves HTML pages to the browser
+- MyCompanyApp.API    : Backend  - exposes REST endpoints, queries database
+- MyCompanyApp.Data   : Shared   - contains EF Core DbContext and entity models
+
+Key Design Principle: MVC does NOT reference Data or API directly.
+It communicates with the API over HTTP using HttpClient, keeping layers decoupled
+so they can be deployed independently.
+
+================================================================================
+2. PROJECT STRUCTURE (FOLDER TREE)
+================================================================================
+
+MyCompanyApp/
+├── MyCompanyApp.slnx                          (Solution file)
+├── ProjectDocumentation.txt                   (This file)
+│
+├── MyCompanyApp.Data/                         (Class Library - Data Layer)
+│   ├── MyCompanyApp.Data.csproj
+│   ├── Class1.cs                              (Unused template file)
+│   ├── Context/
+│   │   └── AdventureWorksContext.cs            (EF Core DbContext)
+│   └── Models/
+│       ├── Person.cs                          (Person entity)
+│       ├── Address.cs                         (Address entity)
+│       ├── Employee.cs                        (Employee entity)
+│       ├── Product.cs                         (Product entity)
+│       ├── Customer.cs                        (Customer entity)
+│       ├── SalesOrderHeader.cs                (Sales order entity)
+│       └── ... (90+ scaffolded entity models)
+│
+├── MyCompanyApp.API/                          (ASP.NET Core Web API)
+│   ├── MyCompanyApp.API.csproj
+│   ├── Program.cs                             (Entry point + DI configuration)
+│   ├── appsettings.json                       (Connection string config)
+│   ├── Properties/
+│   │   └── launchSettings.json                (Dev server URLs)
+│   ├── Controllers/
+│   │   ├── AdventureWorksController.cs        (People API endpoint)
+│   │   └── WeatherForecastController.cs       (Template controller)
+│   └── WeatherForecast.cs                     (Template model)
+│
+├── MyCompanyApp.MVC/                          (ASP.NET Core MVC Frontend)
+│   ├── MyCompanyApp.MVC.csproj
+│   ├── Program.cs                             (Entry point + DI configuration)
+│   ├── appsettings.json                       (API base URL config)
+│   ├── Properties/
+│   │   └── launchSettings.json                (Dev server URLs)
+│   ├── Controllers/
+│   │   ├── HomeController.cs                  (Home + Privacy + Error pages)
+│   │   └── AdventureWorksController.cs        (Calls API, displays People)
+│   ├── Models/
+│   │   ├── ErrorViewModel.cs                  (Error page model)
+│   │   └── PersonViewModel.cs                 (DTO matching API response)
+│   ├── Services/
+│   │   └── ApiService.cs                      (HttpClient wrapper for API)
+│   └── Views/
+│       ├── _ViewImports.cshtml                (Global Razor imports)
+│       ├── _ViewStart.cshtml                  (Layout selection)
+│       ├── Shared/
+│       │   ├── _Layout.cshtml                 (Master layout)
+│       │   └── _Layout.cshtml.css             (Layout styles)
+│       ├── Home/
+│       │   ├── Index.cshtml                   (Home page)
+│       │   └── Privacy.cshtml                 (Privacy page)
+│       └── AdventureWorks/
+│           └── Index.cshtml                   (People data table)
+
+================================================================================
+3. PROJECT REFERENCES & DEPENDENCIES
+================================================================================
+
+MyCompanyApp.Data (Class Library)
+├── References: NONE (standalone)
+└── NuGet Packages:
+    ├── Microsoft.EntityFrameworkCore              v8.0.5  (Core EF framework)
+    ├── Microsoft.EntityFrameworkCore.Design        v8.0.5  (Scaffolding tools)
+    ├── Microsoft.EntityFrameworkCore.SqlServer     v8.0.5  (SQL Server provider)
+    └── Microsoft.EntityFrameworkCore.Tools         v8.0.5  (PMC commands)
+
+MyCompanyApp.API (Web API)
+├── Project References:
+│   └── MyCompanyApp.Data (for DbContext + Models)
+└── NuGet Packages:
+    └── Swashbuckle.AspNetCore                     v6.6.2  (Swagger UI)
+
+MyCompanyApp.MVC (MVC Frontend)
+├── Project References: NONE (communicates via HTTP)
+└── NuGet Packages: NONE (uses framework-included packages only)
+
+Dependency Flow:
+    MVC ──(HTTP)──► API ──(ProjectRef)──► Data ──(EF Core)──► SQL Server
+    (No direct code reference between MVC and API/Data)
+
+================================================================================
+4. MyCompanyApp.Data PROJECT (CLASS LIBRARY)
+================================================================================
+
+--------------------------------------------------------------------------------
+4.1 MyCompanyApp.Data.csproj
+--------------------------------------------------------------------------------
+
+<Project Sdk="Microsoft.NET.Sdk">
+  <PropertyGroup>
+    <TargetFramework>net8.0</TargetFramework>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <Nullable>enable</Nullable>
+  </PropertyGroup>
+  <ItemGroup>
+    <PackageReference Include="Microsoft.EntityFrameworkCore" Version="8.0.5" />
+    <PackageReference Include="Microsoft.EntityFrameworkCore.Design" Version="8.0.5">
+      <PrivateAssets>all</PrivateAssets>
+      <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
+    </PackageReference>
+    <PackageReference Include="Microsoft.EntityFrameworkCore.SqlServer" Version="8.0.5" />
+    <PackageReference Include="Microsoft.EntityFrameworkCore.Tools" Version="8.0.5">
+      <PrivateAssets>all</PrivateAssets>
+      <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
+    </PackageReference>
+  </ItemGroup>
+  <ItemGroup>
+    <Folder Include="Models\" />
+    <Folder Include="Context\" />
+  </ItemGroup>
+</Project>
+
+LINE-BY-LINE EXPLANATION:
+- Sdk="Microsoft.NET.Sdk"       : Standard class library SDK (not Web)
+- TargetFramework: net8.0       : Targets .NET 8
+- ImplicitUsings: enable        : Auto-imports common namespaces (System, System.Collections.Generic, System.Linq, etc.)
+- Nullable: enable              : Enables nullable reference type analysis
+- PrivateAssets: all            : Design/Tools packages are NOT passed to referencing projects
+- IncludeAssets                 : Only includes specific asset types (not runtime DLLs)
+
+NUGET PACKAGE DETAILS:
+- Microsoft.EntityFrameworkCore          : Core ORM framework - DbContext, DbSet<T>, LINQ-to-SQL translation
+- Microsoft.EntityFrameworkCore.Design   : Design-time services for scaffolding (Scaffold-DbContext command)
+- Microsoft.EntityFrameworkCore.SqlServer: SQL Server database provider (UseSqlServer extension)
+- Microsoft.EntityFrameworkCore.Tools    : Package Manager Console tools (Add-Migration, Update-Database, Scaffold-DbContext)
+
+--------------------------------------------------------------------------------
+4.2 Context/AdventureWorksContext.cs
+--------------------------------------------------------------------------------
+
+Namespace: MyCompanyApp.Data.Context
+Base Class: DbContext (from Microsoft.EntityFrameworkCore)
+Generated By: EF Core Database-First scaffolding (Scaffold-DbContext)
+
+KEY SECTIONS:
+
+Constructors:
+- AdventureWorksContext()                                    : Parameterless (used by design-time tools)
+- AdventureWorksContext(DbContextOptions<AdventureWorksContext>) : DI constructor (used at runtime)
+
+DbSet Properties (97 tables mapped):
+- DbSet<Person> People                    : Person.Person table
+- DbSet<Address> Addresses                : Person.Address table
+- DbSet<Employee> Employees               : HumanResources.Employee table
+- DbSet<Product> Products                 : Production.Product table
+- DbSet<Customer> Customers               : Sales.Customer table
+- DbSet<SalesOrderHeader> SalesOrderHeaders: Sales.SalesOrderHeader table
+- ... and 90+ more entity sets
+
+OnConfiguring Method:
+- Contains a #warning directive (scaffolding reminder to move connection string)
+- Has hardcoded fallback connection string (overridden by DI configuration at runtime)
+- Server: MUKESH-SWAMI\SQLEXPRESS01
+- Database: AdventureWorks2025
+
+OnModelCreating Method:
+- Contains Fluent API configuration for all entities
+- Defines primary keys, foreign keys, indexes, constraints
+- Maps table names to schemas (Person, Sales, HumanResources, Production, etc.)
+
+--------------------------------------------------------------------------------
+4.3 Models/Person.cs (Example Entity)
+--------------------------------------------------------------------------------
+
+Namespace: MyCompanyApp.Data.Models
+
+[Table("Person", Schema = "Person")]
+public partial class Person
+{
+    [Key]
+    [Column("BusinessEntityID")]
+    public int BusinessEntityId { get; set; }       // Primary key
+
+    [StringLength(2)]
+    public string PersonType { get; set; }           // SC, IN, SP, EM, VC, GC
+
+    public bool NameStyle { get; set; }              // 0=Western, 1=Eastern name order
+
+    [StringLength(8)]
+    public string? Title { get; set; }               // Mr., Ms., etc.
+
+    [StringLength(50)]
+    public string FirstName { get; set; }            // First name
+
+    [StringLength(50)]
+    public string? MiddleName { get; set; }          // Middle name (nullable)
+
+    [StringLength(50)]
+    public string LastName { get; set; }             // Last name
+
+    [StringLength(10)]
+    public string? Suffix { get; set; }              // Sr., Jr., etc.
+
+    public int EmailPromotion { get; set; }          // 0=No, 1=AW, 2=AW+Partners
+
+    [Column(TypeName = "xml")]
+    public string? AdditionalContactInfo { get; set; } // XML contact data
+
+    [Column(TypeName = "xml")]
+    public string? Demographics { get; set; }        // XML demographic data
+
+    public Guid Rowguid { get; set; }                // Unique GUID
+    public DateTime ModifiedDate { get; set; }       // Last modified
+
+    // Navigation Properties:
+    public virtual BusinessEntity BusinessEntity { get; set; }
+    public virtual ICollection<BusinessEntityContact> BusinessEntityContacts { get; set; }
+    public virtual ICollection<Customer> Customers { get; set; }
+    public virtual ICollection<EmailAddress> EmailAddresses { get; set; }
+    public virtual Employee? Employee { get; set; }
+    public virtual Password? Password { get; set; }
+    public virtual ICollection<PersonCreditCard> PersonCreditCards { get; set; }
+    public virtual ICollection<PersonPhone> PersonPhones { get; set; }
+}
+
+DATA ANNOTATIONS USED:
+- [Table]           : Maps class to database table + schema
+- [Key]             : Marks primary key property
+- [Column]          : Maps property to specific column name/type
+- [StringLength]    : Specifies max string length (validation + DB)
+- [Index]           : Defines database indexes (on class level)
+- [ForeignKey]      : Defines FK relationship
+- [InverseProperty] : Specifies inverse navigation property
+
+================================================================================
+5. MyCompanyApp.API PROJECT (ASP.NET CORE WEB API)
+================================================================================
+
+--------------------------------------------------------------------------------
+5.1 MyCompanyApp.API.csproj
+--------------------------------------------------------------------------------
+
+<Project Sdk="Microsoft.NET.Sdk.Web">
+  <PropertyGroup>
+    <TargetFramework>net8.0</TargetFramework>
+    <Nullable>enable</Nullable>
+    <ImplicitUsings>enable</ImplicitUsings>
+  </PropertyGroup>
+  <ItemGroup>
+    <PackageReference Include="Swashbuckle.AspNetCore" Version="6.6.2" />
+  </ItemGroup>
+  <ItemGroup>
+    <ProjectReference Include="..\MyCompanyApp.Data\MyCompanyApp.Data.csproj" />
+  </ItemGroup>
+</Project>
+
+LINE-BY-LINE EXPLANATION:
+- Sdk="Microsoft.NET.Sdk.Web"   : Web application SDK (includes ASP.NET Core framework)
+- TargetFramework: net8.0       : Targets .NET 8
+- Swashbuckle.AspNetCore v6.6.2 : Swagger/OpenAPI documentation generator
+- ProjectReference → Data       : Direct reference to Data project for DbContext + Models
+
+FRAMEWORK-INCLUDED PACKAGES (no explicit NuGet needed):
+- Microsoft.AspNetCore.Mvc       : Controllers, routing, model binding
+- System.Text.Json               : JSON serialization
+- Microsoft.Extensions.DependencyInjection : DI container
+
+--------------------------------------------------------------------------------
+5.2 Program.cs (API Entry Point)
+--------------------------------------------------------------------------------
+
+using Microsoft.EntityFrameworkCore;         // For AddDbContext, UseSqlServer
+using MyCompanyApp.Data.Context;             // For AdventureWorksContext
+
+var builder = WebApplication.CreateBuilder(args);
+// Creates a WebApplicationBuilder with default config:
+// - Loads appsettings.json, appsettings.{Environment}.json
+// - Loads environment variables
+// - Configures Kestrel web server
+// - Sets up logging
+
+builder.Services.AddDbContext<AdventureWorksContext>(options =>
+    options.UseSqlServer(builder.Configuration.GetConnectionString("DefaultConnection")));
+// Registers AdventureWorksContext in DI container as Scoped (one per request)
+// Reads "ConnectionStrings:DefaultConnection" from appsettings.json
+// Configures SQL Server as the database provider
+
+builder.Services.AddControllers();
+// Registers MVC controller services (no views - API only)
+// Enables: model binding, validation, content negotiation, JSON formatting
+
+builder.Services.AddEndpointsApiExplorer();
+// Registers endpoint metadata API explorer (required for Swagger)
+
+builder.Services.AddSwaggerGen();
+// Registers Swagger document generator
+// Generates OpenAPI specification from controller metadata
+
+var app = builder.Build();
+// Builds the WebApplication, configures the HTTP pipeline
+
+if (app.Environment.IsDevelopment())
+{
+    app.UseSwagger();
+    // Serves the OpenAPI JSON spec at /swagger/v1/swagger.json
+
+    app.UseSwaggerUI();
+    // Serves the Swagger interactive UI at /swagger/index.html
+}
+// Swagger only enabled in Development environment
+
+app.UseHttpsRedirection();
+// Redirects HTTP requests to HTTPS
+
+app.MapControllers();
+// Maps attribute-routed controllers (e.g., [Route("api/[controller]")])
+
+app.Run();
+// Starts the web server and blocks until shutdown
+
+--------------------------------------------------------------------------------
+5.3 Controllers/AdventureWorksController.cs
+--------------------------------------------------------------------------------
+
+using Microsoft.AspNetCore.Mvc;              // For ControllerBase, ApiController, HttpGet, IActionResult
+using MyCompanyApp.Data.Context;             // For AdventureWorksContext
+
+namespace MyCompanyApp.API.Controllers       // Follows convention: {Project}.Controllers
+{
+    [ApiController]                          // Enables: automatic model validation, binding source inference, problem details responses
+    [Route("api/[controller]")]              // Route template: /api/AdventureWorks (controller name minus "Controller" suffix)
+    public class AdventureWorksController : ControllerBase  // ControllerBase = API (no View support); Controller = MVC (has View support)
+    {
+        private readonly AdventureWorksContext _context;
+        // EF Core DbContext injected via constructor DI
+
+        public AdventureWorksController(AdventureWorksContext context)
+        {
+            _context = context;
+            // DI container creates a scoped AdventureWorksContext per request
+        }
+
+        [HttpGet]                            // Responds to: GET /api/AdventureWorks
+        public IActionResult GetPeople()
+        {
+            var data = _context.People       // DbSet<Person> - maps to Person.Person table
+                .Select(p => new             // Projects to anonymous type (avoids circular reference serialization)
+                {
+                    p.BusinessEntityId,      // int    - Primary key
+                    p.PersonType,            // string - SC/IN/SP/EM/VC/GC
+                    p.FirstName,             // string - First name
+                    p.MiddleName,            // string? - Middle name (nullable)
+                    p.LastName               // string - Last name
+                })
+                .ToList();                   // Executes SQL query, materializes results
+
+            return Ok(data);                 // Returns HTTP 200 with JSON array
+        }
+
+        // Generated SQL (approximate):
+        // SELECT [p].[BusinessEntityID], [p].[PersonType], [p].[FirstName],
+        //        [p].[MiddleName], [p].[LastName]
+        // FROM [Person].[Person] AS [p]
+
+        // JSON Response Format:
+        // [
+        //   { "businessEntityId": 1, "personType": "EM", "firstName": "Ken", "middleName": "J", "lastName": "Sánchez" },
+        //   { "businessEntityId": 2, "personType": "EM", "firstName": "Terri", "middleName": "Lee", "lastName": "Duffy" },
+        //   ...
+        // ]
+    }
+}
+
+WHY .Select() PROJECTION IS USED:
+- The Person entity has navigation properties (BusinessEntity, Customers, EmailAddresses, etc.)
+- These create circular references: Person → Customer → Person → Customer → ...
+- System.Text.Json (default in .NET 8) throws JsonException on circular references
+- .Select() projects to a flat anonymous type with only scalar properties — no navigation, no cycles
+
+--------------------------------------------------------------------------------
+5.4 appsettings.json (API Configuration)
+--------------------------------------------------------------------------------
+
+{
+  "Logging": {
+    "LogLevel": {
+      "Default": "Information",              // Default log level for all providers
+      "Microsoft.AspNetCore": "Warning"      // ASP.NET Core framework logs at Warning+ only
+    }
+  },
+  "ConnectionStrings": {
+    "DefaultConnection": "Server=MUKESH-SWAMI\\SQLEXPRESS01;Database=AdventureWorks2025;Trusted_Connection=True;TrustServerCertificate=True"
+  },
+  "AllowedHosts": "*"                        // Accept requests from any host
+}
+
+CONNECTION STRING BREAKDOWN:
+- Server=MUKESH-SWAMI\SQLEXPRESS01  : SQL Server instance (named instance on local machine)
+- Database=AdventureWorks2025       : Target database name
+- Trusted_Connection=True           : Use Windows Authentication (no username/password)
+- TrustServerCertificate=True       : Trust self-signed SSL certificate (dev only)
+
+================================================================================
+6. MyCompanyApp.MVC PROJECT (ASP.NET CORE MVC FRONTEND)
+================================================================================
+
+--------------------------------------------------------------------------------
+6.1 MyCompanyApp.MVC.csproj
+--------------------------------------------------------------------------------
+
+<Project Sdk="Microsoft.NET.Sdk.Web">
+  <PropertyGroup>
+    <TargetFramework>net8.0</TargetFramework>
+    <Nullable>enable</Nullable>
+    <ImplicitUsings>enable</ImplicitUsings>
+  </PropertyGroup>
+</Project>
+
+LINE-BY-LINE EXPLANATION:
+- Sdk="Microsoft.NET.Sdk.Web"   : Web application SDK
+- NO project references         : MVC communicates with API via HTTP only
+- NO additional NuGet packages  : Uses framework-included packages only
+
+FRAMEWORK-INCLUDED PACKAGES (via Microsoft.NET.Sdk.Web):
+- Microsoft.AspNetCore.Mvc                  : MVC controllers + views
+- Microsoft.Extensions.Http                 : IHttpClientFactory, AddHttpClient<T>
+- System.Net.Http.Json                      : ReadFromJsonAsync extension methods
+- Microsoft.Extensions.DependencyInjection  : DI container
+
+--------------------------------------------------------------------------------
+6.2 Program.cs (MVC Entry Point)
+--------------------------------------------------------------------------------
+
+using MyCompanyApp.MVC.Services;             // For ApiService class
+
+namespace MyCompanyApp.MVC
+{
+    public class Program
+    {
+        public static void Main(string[] args)
+        {
+            var builder = WebApplication.CreateBuilder(args);
+            // Creates builder with default configuration
+
+            builder.Services.AddControllersWithViews();
+            // Registers MVC services: controllers + Razor view engine + view compilation
+            // Unlike AddControllers() (API-only), this adds view rendering support
+
+            builder.Services.AddHttpClient<ApiService>(client =>
+            {
+                var apiBaseUrl = builder.Configuration["ApiSettings:BaseUrl"]
+                    ?? "https://localhost:7014/api/";
+                client.BaseAddress = new Uri(apiBaseUrl);
+                // Sets base address so ApiService can use relative URLs like "AdventureWorks"
+                // Reads from appsettings.json "ApiSettings:BaseUrl"
+                // Falls back to hardcoded URL if config is missing
+            })
+            .ConfigurePrimaryHttpMessageHandler(() =>
+            {
+                return new HttpClientHandler
+                {
+                    ServerCertificateCustomValidationCallback =
+                        HttpClientHandler.DangerousAcceptAnyServerCertificateValidator
+                    // Bypasses SSL certificate validation for localhost dev certificates
+                    // Required because the API uses a self-signed dev certificate
+                    // WARNING: Remove this for production — use trusted certificates instead
+                };
+            });
+            // AddHttpClient<ApiService>:
+            //   - Registers ApiService as a Transient service
+            //   - Creates a named HttpClient managed by IHttpClientFactory
+            //   - Handles HttpClient lifetime (prevents socket exhaustion)
+            //   - Configures DNS rotation (respects DNS TTL)
+
+            var app = builder.Build();
+
+            if (!app.Environment.IsDevelopment())
+            {
+                app.UseExceptionHandler("/Home/Error");
+                // In non-dev: shows friendly error page instead of stack traces
+
+                app.UseHsts();
+                // Adds HTTP Strict Transport Security header
+            }
+
+            app.UseHttpsRedirection();       // Redirects HTTP → HTTPS
+            app.UseStaticFiles();            // Serves wwwroot/ files (CSS, JS, images)
+            app.UseRouting();                // Enables endpoint routing
+            app.UseAuthorization();          // Enables [Authorize] attribute support
+
+            app.MapControllerRoute(
+                name: "default",
+                pattern: "{controller=Home}/{action=Index}/{id?}");
+            // Convention-based routing:
+            //   /                          → HomeController.Index()
+            //   /Home/Privacy              → HomeController.Privacy()
+            //   /AdventureWorks            → AdventureWorksController.Index()
+            //   /AdventureWorks/Index      → AdventureWorksController.Index()
+
+            app.Run();
+        }
+    }
+}
+
+--------------------------------------------------------------------------------
+6.3 Services/ApiService.cs
+--------------------------------------------------------------------------------
+
+using MyCompanyApp.MVC.Models;               // For PersonViewModel
+
+namespace MyCompanyApp.MVC.Services
+{
+    public class ApiService
+    {
+        private readonly HttpClient _httpClient;
+        // HttpClient instance managed by IHttpClientFactory
+        // BaseAddress already set to "https://localhost:7014/api/" via DI config
+
+        public ApiService(HttpClient httpClient)
+        {
+            _httpClient = httpClient;
+            // Constructor injection — IHttpClientFactory creates and injects the HttpClient
+        }
+
+        public async Task<List<PersonViewModel>> GetAdventureWorksData()
+        {
+            var response = await _httpClient.GetAsync("AdventureWorks");
+            // Sends GET request to: https://localhost:7014/api/AdventureWorks
+            // "AdventureWorks" is appended to BaseAddress
+
+            response.EnsureSuccessStatusCode();
+            // Throws HttpRequestException if status code is not 2xx
+
+            var data = await response.Content.ReadFromJsonAsync<List<PersonViewModel>>();
+            // Deserializes JSON response body into List<PersonViewModel>
+            // Uses System.Text.Json with default options (camelCase property matching)
+            // JSON property "businessEntityId" maps to C# property "BusinessEntityId"
+
+            return data ?? [];
+            // Returns deserialized list, or empty collection if null
+            // [] is C# 12 collection expression (equivalent to new List<PersonViewModel>())
+        }
+    }
+}
+
+--------------------------------------------------------------------------------
+6.4 Models/PersonViewModel.cs
+--------------------------------------------------------------------------------
+
+namespace MyCompanyApp.MVC.Models
+{
+    public class PersonViewModel
+    {
+        public int BusinessEntityId { get; set; }    // Maps to JSON: "businessEntityId"
+        public string PersonType { get; set; } = null!;  // Maps to JSON: "personType"
+        public string FirstName { get; set; } = null!;   // Maps to JSON: "firstName"
+        public string? MiddleName { get; set; }          // Maps to JSON: "middleName" (nullable)
+        public string LastName { get; set; } = null!;    // Maps to JSON: "lastName"
+    }
+}
+
+PURPOSE:
+- DTO (Data Transfer Object) for deserializing the API JSON response
+- Properties match the anonymous type projected in the API controller
+- "= null!" suppresses nullable warnings for required properties that will be set during deserialization
+- "string?" on MiddleName indicates it can genuinely be null
+
+WHY NOT USE Person.cs FROM DATA PROJECT:
+- MVC does not reference the Data project (by design)
+- Person entity has 15+ properties + navigation properties — too heavy for the view
+- PersonViewModel has only the 5 fields needed for display
+- Keeps the MVC layer independent and lightweight
+
+--------------------------------------------------------------------------------
+6.5 Controllers/AdventureWorksController.cs
+--------------------------------------------------------------------------------
+
+using Microsoft.AspNetCore.Mvc;              // For Controller, IActionResult, View()
+using MyCompanyApp.MVC.Services;             // For ApiService
+
+namespace MyCompanyApp.MVC.Controllers
+{
+    public class AdventureWorksController : Controller  // Controller (not ControllerBase) — has View support
+    {
+        private readonly ApiService _apiService;
+        // ApiService injected via DI (registered with AddHttpClient<ApiService>)
+
+        public AdventureWorksController(ApiService apiService)
+        {
+            _apiService = apiService;
+        }
+
+        public async Task<IActionResult> Index()
+        // Handles: GET /AdventureWorks or GET /AdventureWorks/Index
+        // async because it awaits the HTTP call to the API
+        {
+            var data = await _apiService.GetAdventureWorksData();
+            // Calls API: GET https://localhost:7014/api/AdventureWorks
+            // Returns: List<PersonViewModel>
+
+            return View(data);
+            // Renders Views/AdventureWorks/Index.cshtml
+            // Passes List<PersonViewModel> as the @model
+        }
+    }
+}
+
+--------------------------------------------------------------------------------
+6.6 Controllers/HomeController.cs
+--------------------------------------------------------------------------------
+
+using Microsoft.AspNetCore.Mvc;
+using MyCompanyApp.MVC.Models;
+using System.Diagnostics;                    // For Activity class
+
+namespace MyCompanyApp.MVC.Controllers
+{
+    public class HomeController : Controller
+    {
+        private readonly ILogger<HomeController> _logger;
+        // Built-in logging, injected by DI
+
+        public HomeController(ILogger<HomeController> logger)
+        {
+            _logger = logger;
+        }
+
+        public IActionResult Index()         // GET /  or  GET /Home  or  GET /Home/Index
+        {
+            return View();                   // Renders Views/Home/Index.cshtml
+        }
+
+        public IActionResult Privacy()       // GET /Home/Privacy
+        {
+            return View();                   // Renders Views/Home/Privacy.cshtml
+        }
+
+        [ResponseCache(Duration = 0, Location = ResponseCacheLocation.None, NoStore = true)]
+        // Prevents browser caching of error page
+        public IActionResult Error()         // GET /Home/Error
+        {
+            return View(new ErrorViewModel
+            {
+                RequestId = Activity.Current?.Id ?? HttpContext.TraceIdentifier
+                // Uses distributed tracing ID or ASP.NET Core trace identifier
+            });
+        }
+    }
+}
+
+--------------------------------------------------------------------------------
+6.7 Models/ErrorViewModel.cs
+--------------------------------------------------------------------------------
+
+namespace MyCompanyApp.MVC.Models
+{
+    public class ErrorViewModel
+    {
+        public string? RequestId { get; set; }                    // Trace ID for error tracking
+        public bool ShowRequestId => !string.IsNullOrEmpty(RequestId);  // Show ID only if present
+    }
+}
+
+--------------------------------------------------------------------------------
+6.8 Views/AdventureWorks/Index.cshtml
+--------------------------------------------------------------------------------
+
+@model List<MyCompanyApp.MVC.Models.PersonViewModel>
+@* Strongly-typed view — expects List<PersonViewModel> from controller *@
+
+<h2>Adventure Works Data</h2>
+
+<table border="1">
+    <thead>
+        <tr>
+            <th>ID</th>                      @* BusinessEntityId *@
+            <th>Type</th>                    @* PersonType *@
+            <th>First Name</th>              @* FirstName *@
+            <th>Middle Name</th>             @* MiddleName *@
+            <th>Last Name</th>               @* LastName *@
+        </tr>
+    </thead>
+    <tbody>
+        @foreach (var item in Model)         @* Iterates over List<PersonViewModel> *@
+        {
+            <tr>
+                <td>@item.BusinessEntityId</td>
+                <td>@item.PersonType</td>
+                <td>@item.FirstName</td>
+                <td>@item.MiddleName</td>    @* Renders empty if null *@
+                <td>@item.LastName</td>
+            </tr>
+        }
+    </tbody>
+</table>
+
+--------------------------------------------------------------------------------
+6.9 Views/_ViewImports.cshtml
+--------------------------------------------------------------------------------
+
+@using MyCompanyApp.MVC                      // Import root namespace
+@using MyCompanyApp.MVC.Models               // Import Models namespace (so views can use PersonViewModel without full path)
+@addTagHelper *, Microsoft.AspNetCore.Mvc.TagHelpers   // Enable Tag Helpers (asp-for, asp-action, etc.)
+
+--------------------------------------------------------------------------------
+6.10 appsettings.json (MVC Configuration)
+--------------------------------------------------------------------------------
+
+{
+  "ApiSettings": {
+    "BaseUrl": "https://localhost:7014/api/"  // API base URL (read by Program.cs)
+  },
+  "Logging": {
+    "LogLevel": {
+      "Default": "Information",
+      "Microsoft.AspNetCore": "Warning"
+    }
+  },
+  "AllowedHosts": "*"
+}
+
+================================================================================
+7. CONFIGURATION FILES
+================================================================================
+
+API appsettings.json:
+┌──────────────────────────────┬─────────────────────────────────────────────────────┐
+│ Key                          │ Value                                               │
+├──────────────────────────────┼─────────────────────────────────────────────────────┤
+│ ConnectionStrings:           │ Server=MUKESH-SWAMI\SQLEXPRESS01;                   │
+│   DefaultConnection         │ Database=AdventureWorks2025;                         │
+│                              │ Trusted_Connection=True;TrustServerCertificate=True  │
+├──────────────────────────────┼─────────────────────────────────────────────────────┤
+│ Logging:LogLevel:Default     │ Information                                         │
+│ Logging:LogLevel:MS.AspNet   │ Warning                                             │
+│ AllowedHosts                 │ * (all)                                             │
+└──────────────────────────────┴─────────────────────────────────────────────────────┘
+
+MVC appsettings.json:
+┌──────────────────────────────┬─────────────────────────────────────────────────────┐
+│ Key                          │ Value                                               │
+├──────────────────────────────┼─────────────────────────────────────────────────────┤
+│ ApiSettings:BaseUrl          │ https://localhost:7014/api/                          │
+├──────────────────────────────┼─────────────────────────────────────────────────────┤
+│ Logging:LogLevel:Default     │ Information                                         │
+│ Logging:LogLevel:MS.AspNet   │ Warning                                             │
+│ AllowedHosts                 │ * (all)                                             │
+└──────────────────────────────┴─────────────────────────────────────────────────────┘
+
+================================================================================
+8. LAUNCH SETTINGS & URLs
+================================================================================
+
+MyCompanyApp.API:
+┌──────────────┬───────────────────────────────────────┐
+│ Profile      │ URL                                   │
+├──────────────┼───────────────────────────────────────┤
+│ http         │ http://localhost:5232                  │
+│ https        │ https://localhost:7014                 │
+│              │ http://localhost:5232  (fallback)      │
+│ IIS Express  │ http://localhost:27084 (SSL: 44377)   │
+└──────────────┴───────────────────────────────────────┘
+
+MyCompanyApp.MVC:
+┌──────────────┬───────────────────────────────────────┐
+│ Profile      │ URL                                   │
+├──────────────┼───────────────────────────────────────┤
+│ http         │ http://localhost:5271                  │
+│ https        │ https://localhost:7079                 │
+│              │ http://localhost:5271  (fallback)      │
+│ IIS Express  │ http://localhost:24766 (SSL: 44339)   │
+└──────────────┴───────────────────────────────────────┘
+
+BROWSEABLE URLS (when both projects are running):
+- https://localhost:7014/swagger           → API Swagger UI
+- https://localhost:7014/api/AdventureWorks → API JSON response (direct)
+- https://localhost:7079                    → MVC Home Page
+- https://localhost:7079/AdventureWorks     → MVC People Data Table
+
+================================================================================
+9. DATA FLOW (END-TO-END REQUEST)
+================================================================================
+
+User navigates to: https://localhost:7079/AdventureWorks
+
+Step 1: BROWSER → MVC
+   Browser sends: GET https://localhost:7079/AdventureWorks
+   MVC routing matches: {controller=AdventureWorks}/{action=Index}
+
+Step 2: MVC CONTROLLER
+   AdventureWorksController.Index() is called
+   DI injects ApiService (with pre-configured HttpClient)
+
+Step 3: MVC → API (HTTP Call)
+   ApiService.GetAdventureWorksData() executes
+   HttpClient sends: GET https://localhost:7014/api/AdventureWorks
+   (BaseAddress "https://localhost:7014/api/" + relative "AdventureWorks")
+
+Step 4: API CONTROLLER
+   API routing matches: [Route("api/[controller]")] + [HttpGet]
+   AdventureWorksController.GetPeople() is called
+   DI injects AdventureWorksContext (scoped)
+
+Step 5: API → DATABASE (EF Core Query)
+   _context.People.Select(...).ToList() executes
+   EF Core generates SQL:
+     SELECT [p].[BusinessEntityID], [p].[PersonType],
+            [p].[FirstName], [p].[MiddleName], [p].[LastName]
+     FROM [Person].[Person] AS [p]
+
+Step 6: DATABASE → API
+   SQL Server returns rows from AdventureWorks2025
+   EF Core materializes anonymous objects
+
+Step 7: API → MVC (JSON Response)
+   API returns: Ok(data) → HTTP 200
+   System.Text.Json serializes to JSON array:
+   [{"businessEntityId":1,"personType":"EM","firstName":"Ken",...},...]
+
+Step 8: MVC DESERIALIZES
+   ApiService receives JSON response
+   ReadFromJsonAsync<List<PersonViewModel>>() deserializes
+   System.Text.Json maps camelCase JSON to PascalCase C# properties
+
+Step 9: MVC → VIEW
+   Controller calls: return View(data)
+   Razor engine renders Views/AdventureWorks/Index.cshtml
+   @foreach iterates List<PersonViewModel>, generates HTML table rows
+
+Step 10: MVC → BROWSER
+   MVC returns: HTTP 200 with HTML page
+   Browser renders the People data table
+
+================================================================================
+10. FIXES APPLIED DURING SETUP
+================================================================================
+
+┌────┬─────────────────────────────────────────┬────────────────────────────────────────────────┐
+│ #  │ File                                    │ Issue → Fix                                    │
+├────┼─────────────────────────────────────────┼────────────────────────────────────────────────┤
+│  1 │ MVC\appsettings.json                    │ Invalid JSON (nested {) → Fixed structure      │
+│    │                                         │ Wrong URL (5001) → Corrected to 7014           │
+├────┼─────────────────────────────────────────┼────────────────────────────────────────────────┤
+│  2 │ MVC\MyCompanyApp.MVC.csproj             │ <Compile Remove="Services\**" /> excluded      │
+│    │                                         │ the entire Services folder → Removed exclusion  │
+├────┼─────────────────────────────────────────┼────────────────────────────────────────────────┤
+│  3 │ MVC\Services\ApiService.cs              │ Return type List<string> → List<PersonViewModel>│
+├────┼─────────────────────────────────────────┼────────────────────────────────────────────────┤
+│  4 │ MVC\Models\PersonViewModel.cs           │ File missing → Created with 5 matching props   │
+├────┼─────────────────────────────────────────┼────────────────────────────────────────────────┤
+│  5 │ MVC\Program.cs                          │ Hardcoded wrong URL → Reads from config         │
+│    │                                         │ Added SSL bypass for dev certificate             │
+├────┼─────────────────────────────────────────┼────────────────────────────────────────────────┤
+│  6 │ API\Controllers\AdventureWorksController│ Returned raw Person entities (circular refs)    │
+│    │                                         │ → Added .Select() projection                    │
+├────┼─────────────────────────────────────────┼────────────────────────────────────────────────┤
+│  7 │ API\Program.cs                          │ Missing Swagger middleware → Added               │
+│    │                                         │ AddEndpointsApiExplorer + AddSwaggerGen          │
+│    │                                         │ UseSwagger + UseSwaggerUI + UseHttpsRedirection  │
+├────┼─────────────────────────────────────────┼────────────────────────────────────────────────┤
+│  8 │ MVC\Views\AdventureWorks\Index.cshtml   │ @model List<string> → List<PersonViewModel>     │
+│    │                                         │ Single "Data" column → 5 proper columns          │
+├────┼─────────────────────────────────────────┼────────────────────────────────────────────────┤
+│  9 │ Data\MyCompanyApp.Data.csproj           │ Removed unnecessary Microsoft.Extensions.Http   │
+│    │                                         │ v10.0.3 package from Data layer                  │
+└────┴─────────────────────────────────────────┴────────────────────────────────────────────────┘
+
+================================================================================
+11. HOW TO RUN THE SOLUTION
+================================================================================
+
+PREREQUISITES:
+- .NET 8.0 SDK installed
+- SQL Server (MUKESH-SWAMI\SQLEXPRESS01) running
+- AdventureWorks2025 database restored
+- Visual Studio 2022/2026 (or VS Code with C# extensions)
+
+VISUAL STUDIO:
+1. Open MyCompanyApp.slnx
+2. Right-click solution → Configure Startup Projects
+3. Select "Multiple startup projects"
+4. Set MyCompanyApp.API = Start, MyCompanyApp.MVC = Start, MyCompanyApp.Data = None
+5. Move API above MVC (API must start first)
+6. Press F5
+
+COMMAND LINE (two terminals):
+Terminal 1: cd MyCompanyApp.API && dotnet run --launch-profile https
+Terminal 2: cd MyCompanyApp.MVC && dotnet run --launch-profile https
+
+VERIFY:
+- API Swagger:  https://localhost:7014/swagger
+- API Direct:   https://localhost:7014/api/AdventureWorks
+- MVC Home:     https://localhost:7079
+- MVC Data:     https://localhost:7079/AdventureWorks
+
+================================================================================
+                         END OF DOCUMENTATION
+================================================================================
